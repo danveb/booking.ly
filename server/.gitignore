@@ -1,0 +1,6 @@
+# important 
+node_modules
+.env 
+
+# misc. 
+setup.js
