@@ -2,12 +2,12 @@ import express from "express";
 import colors from "colors"; 
 import dotenv from "dotenv/config"; 
 import connectDB from "./config/db.js"; 
-const port = process.env.PORT || 4000; 
 import cors from "cors"; 
 import authRoute from "./routes/authRoute.js"; 
 import usersRoute from "./routes/usersRoute.js"; 
 import hotelsRoute from "./routes/hotelsRoute.js"; 
 import roomsRoute from "./routes/roomsRoute.js"; 
+const port = process.env.PORT || 4000; 
 
 connectDB(); 
 
