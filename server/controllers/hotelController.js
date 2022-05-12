@@ -4,9 +4,9 @@ import Hotel from "../models/hotelModel.js";
 // @description: Register New Hotel 
 // @route: POST /api/hotels
 const registerHotel = asyncHandler(async (req, res) => {
-    const { name, type, city, address, distance, title, description, cheapestPrice } = req.body; 
+    const { name, type, city, address, distance, title, description, cheapestPrice, rating } = req.body; 
     // error check
-    if(!name || !type || !city || !address || !distance || !title || !description || !cheapestPrice) {
+    if(!name || !type || !city || !address || !distance || !title || !description || !cheapestPrice || !rating) {
         res.status(400); 
         throw new Error("Please add all fields"); 
     }; 
@@ -19,7 +19,8 @@ const registerHotel = asyncHandler(async (req, res) => {
         distance,
         title,
         description,
-        cheapestPrice
+        cheapestPrice, 
+        rating
     }); 
     if(hotel) {
         res.status(201).json({
@@ -34,6 +35,7 @@ const registerHotel = asyncHandler(async (req, res) => {
             description: hotel.description, 
             rooms: hotel.rooms, 
             cheapestPrice: hotel.cheapestPrice, 
+            rating: hotel.rating, 
             featured: hotel.featured
         }); 
     } else {
@@ -63,6 +65,7 @@ const getHotel = asyncHandler(async (req, res) => {
         description: hotel.description, 
         rooms: hotel.rooms, 
         cheapestPrice: hotel.cheapestPrice, 
+        rating: hotel.rating, 
         featured: hotel.featured
     }); 
 }); 
@@ -70,12 +73,13 @@ const getHotel = asyncHandler(async (req, res) => {
 // @description: Get Hotel Data 
 // @route: GET /api/hotels/:id 
 const getAllHotels = asyncHandler(async (req, res) => {
-    const hotels = await Hotel.find(); 
+    const { min, max, ...others } = req.query 
+    // query with limit 
+    const hotels = await Hotel.find({...others, cheapestPrice: { $gt: min | 1, $lt: max || 2000 }}).limit(req.query.limit); 
     if(!hotels) {
         res.status(400); 
         throw new Error("No Hotels found"); 
     } 
-    await Hotel.find(); 
     res.status(200).json(hotels); 
 }); 
 
@@ -93,10 +97,40 @@ const deleteHotel = asyncHandler(async (req, res) => {
     res.status(200).json({ id: req.params.id }); 
 }); 
 
+// @description: Count by City
+// @route: GET /api/hotels/countByCity?cities=Berlin,Paris,Milano
+// - run query on cities
+const countByCity = asyncHandler(async (req, res) => {
+    const cities = req.query.cities.split(","); 
+    const list = await Promise.all(cities.map(city => {
+        return Hotel.countDocuments({ city: city }); 
+    }))
+    res.status(200).json(list); 
+}); 
+
+// @description: Count By Type
+// @route: GET /api/hotels/countByType 
+const countByType = asyncHandler(async (req, res) => {
+    const hotelCount = await Hotel.countDocuments({ type: "hotel" }); 
+    const apartmentCount = await Hotel.countDocuments({ type: "apartment" }); 
+    const resortCount = await Hotel.countDocuments({ type: "resort" }); 
+    const villaCount = await Hotel.countDocuments({ type: "villa" });     
+    const cabinCount = await Hotel.countDocuments({ type: "cabin" }); 
+    res.status(200).json([
+        { type: "hotels", count: hotelCount }, 
+        { type: "apartments", count: apartmentCount }, 
+        { type: "resorts", count: resortCount }, 
+        { type: "villas", count: villaCount }, 
+        { type: "cabins", count: cabinCount }, 
+    ]);
+}); 
+
 export {
     registerHotel, 
     getHotel, 
     getAllHotels, 
     updateHotel, 
     deleteHotel, 
+    countByCity, 
+    countByType, 
 }
