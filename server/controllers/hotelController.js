@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler"; 
 import Hotel from "../models/hotelModel.js"; 
+import Room from "../models/roomModel.js"; 
 
 // @description: Register New Hotel 
 // @route: POST /api/hotels
@@ -131,6 +132,16 @@ const countByType = asyncHandler(async (req, res) => {
     ]);
 }); 
 
+// @description: Get Hotel Rooms
+// @route: GET /api/hotels/room/:id
+const getHotelRooms = asyncHandler(async (req, res) => {
+    const hotel = await Hotel.findById(req.params.id); 
+    const list = await Promise.all(hotel.rooms.map((room) => {
+        return Room.findById(room); 
+    }));
+    res.status(200).json(list); 
+}); 
+
 export {
     registerHotel, 
     getHotel, 
@@ -139,4 +150,5 @@ export {
     deleteHotel, 
     countByCity, 
     countByType, 
+    getHotelRooms, 
 }

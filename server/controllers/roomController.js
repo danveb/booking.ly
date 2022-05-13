@@ -41,6 +41,17 @@ const updateRoom = asyncHandler(async (req, res) => {
     res.status(200).json(updatedHotel); 
 }); 
 
+// @description: Update Room Availability
+// @route: PUT /api/rooms/availability/:id 
+const updateRoomAvailability = asyncHandler(async (req, res) => {
+    await Room.updateOne({ "roomNumbers._id": req.params.id}, {
+        $push: {
+            "roomNumbers.$.unavailableDates": req.body.dates
+        },
+    });
+    res.status(200).json("Room status has been updated"); 
+}); 
+
 // @description: Delete Room
 // @route: DELETE /api/rooms/:id 
 const deleteRoom = asyncHandler(async (req, res) => {
@@ -55,5 +66,6 @@ export {
     getRoom, 
     getAllRooms, 
     updateRoom, 
+    updateRoomAvailability, 
     deleteRoom, 
 }
