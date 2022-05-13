@@ -1,16 +1,44 @@
-import { useState } from "react"; 
+import { useContext, useState } from "react"; 
+import { useLocation, useNavigate } from "react-router-dom";
+import { Header, Navbar, MailList, Footer, Spinner, Reserve } from "../../components/index"; 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleLeft, faCircleRight, faCircleXmark, faHeart, faLocationDot } from "@fortawesome/free-solid-svg-icons";
-import Header from "../../components/Header/Header";
-import Navbar from "../../components/Navbar/Navbar";
-import MailList from "../../components/MailList/MailList";
-import Footer from "../../components/Footer/Footer";
+import useFetch from "../../hooks/useFetch";
+import { SearchContext } from "../../context/SearchContext";
+import { AuthContext } from "../../context/AuthContext";
 import "./Hotel.scss"; 
 
 const Hotel = () => {
+    // useContext
+    const { user } = useContext(AuthContext); 
+
+    // useNavigate
+    const navigate = useNavigate(); 
+
     // useState
     const [slideIdx, setSlideIdx] = useState(0); 
     const [openModal, setOpenModal] = useState(false); 
+    const [openBook, setOpenBook] = useState(false); 
+
+    // useLocation 
+    const location = useLocation(); 
+    const hotelId = location.pathname.split("/")[2]; 
+
+    // useFetch
+    const { data, loading, error } = useFetch(`/hotels/find/${hotelId}`); 
+
+    // useContext
+    const { dates, options } = useContext(SearchContext); 
+    console.log(dates); 
+
+    const MILISECONDS_PER_DAY = 1000 * 60 * 60 * 24; 
+    function dayDifference (date1, date2) {
+        const timeDiff = Math.abs(date2.getTime() - date1.getTime()); 
+        const diffDays = Math.ceil(timeDiff / MILISECONDS_PER_DAY); 
+        return diffDays; 
+    };
+
+    const days = dayDifference(dates[0].endDate, dates[0].startDate); 
 
     // static hotel images 
     // to remove once db in place
@@ -50,74 +78,81 @@ const Hotel = () => {
         setSlideIdx(newIdx); 
     }; 
 
+    const handleClick = () => {
+        if(user) {
+            setOpenBook(true); 
+        } else {
+            navigate("/login"); 
+        };
+    };
+
     return (
         <div>
             <Navbar />
             <Header type="list" />
-            <div className="hotel-container">
-                {openModal && <div className="slider">
-                    <FontAwesomeIcon icon={faCircleXmark} className="close" onClick={() => setOpenModal(false)}/>
-                    <FontAwesomeIcon icon={faCircleLeft} className="arrow" onClick={() => handleMove("left")}/>
-                    <div className="slider-wrapper">
-                        <img src={photos[slideIdx].src} alt="hotel" className="slider-img" />
-                    </div>
-                    <FontAwesomeIcon icon={faCircleRight} className="arrow" onClick={() => handleMove("right")}/>
-                </div>}
-                <div className="hotel-wrapper">
-                    <button className="reserve-btn-top">Reserve</button>
-                    <h1 className="hotel-title">Hôtel du Louvre, in The Unbound Collection by Hyatt</h1>
-                    <div className="hotel-address">
-                        <FontAwesomeIcon icon={faLocationDot} />
-                        <span>Place André Malraux, 1st arr., 75001 Paris, France</span>
-                    </div>
-                    <span className="hotel-distance">Excellent location - 0.8mi from center</span>
-                    <span className="hotel-price-highlight">Book a stay over $1000 at this property and get a free airport taxi</span>
-                    <div className="hotel-imgs">
-                        {photos.map((photo, idx) => (
-                            <div className="hotel-img-wrapper">
-                                <img 
-                                    onClick={() => handleOpenModal(idx)}
-                                    src={photo.src} 
-                                    alt="hotel-img" 
-                                    className="hotel-img"
-                                />
+            {loading ? (
+                <Spinner />
+            ) : (
+                <> 
+                    <div className="hotel-container">
+                    {openModal && <div className="slider">
+                        <FontAwesomeIcon icon={faCircleXmark} className="close" onClick={() => setOpenModal(false)}/>
+                        <FontAwesomeIcon icon={faCircleLeft} className="arrow" onClick={() => handleMove("left")}/>
+                        <div className="slider-wrapper">
+                            <img src={data.photos[slideIdx]} alt="hotel" className="slider-img" />
+                        </div>
+                        <FontAwesomeIcon icon={faCircleRight} className="arrow" onClick={() => handleMove("right")}/>
+                    </div>}
+                    <div className="hotel-wrapper">
+                        <button className="reserve-btn-top">Reserve</button>
+                        <h1 className="hotel-title">{data.name}</h1>
+                        <div className="hotel-address">
+                            <FontAwesomeIcon icon={faLocationDot} />
+                            <span>{data.address}</span>
+                        </div>
+                        <span className="hotel-distance">Excellent location - {data.distance} miles from center</span>
+                        <span className="hotel-price-highlight">Book a stay over ${data.cheapestPrice} at this property and get a free airport taxi</span>
+                        <div className="hotel-imgs">
+                            {data.photos?.map((photo, idx) => (
+                                <div className="hotel-img-wrapper" key={data._id}>
+                                    <img 
+                                        onClick={() => handleOpenModal(idx)}
+                                        src={photo} 
+                                        alt="hotel-img" 
+                                        className="hotel-img"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <div className="hotel-details">
+                            <div className="hotel-details-texts">
+                                <h1 className="hotel-title">{data.title}</h1>
+                                <p className="hotel-description">
+                                    {data.description}
+                                </p>
                             </div>
-                        ))}
-                    </div>
-                    <div className="hotel-details">
-                        <div className="hotel-details-texts">
-                            <h1 className="hotel-title">Stay in the heart of Paris</h1>
-                            <p className="hotel-description">
-                                Located in the heart of Paris, this 5-star hotel offers elegant guest rooms in a Hausmannian-style building. Entirely renovated in 2019, it features a concierge and a tour desk with ticket service.
-                                <br />
-                                <br />
-                                Decorated in a unique style, the bright air-conditioned guest rooms at the Hotel du Louver in the Unbound Collection by Hyatt are equipped with satellite TV, a mini-bar and free WiFi access. Many rooms offer views of famous Parisian landmarks and all rooms have a private bathroom, some include decorated with marble.
-                                <br />
-                                <br />
-                                Hotel du Louver in the Unbound Collection by Hyatt is located 2 minutes from Palais Royal Metro Station, providing direct access to the Champs Elysees and the Place de la Bastille. Public parking is available nearby.
-                                <br />
-                                <br />
-                                This is our guests' favorite part of Paris, according to independent reviews.
-                            </p>
-                        </div>
-                        <div className="hotel-details-price">
-                            <h1>Highlights</h1>
-                            <span>
-                                <FontAwesomeIcon icon={faHeart} />
-                                Located in the heart of Paris, this property has an excellent location score of 9.7
-                            </span>
-                            <h2>Breakfast Info</h2>
-                            <span>
-                                Contintental, Vegetarian, Vegan, Gluten-free, American
-                            </span>
-                            <h3>$750/night</h3>
-                            <button>Reserve</button>
+                            <div className="hotel-details-price">
+                                <h1>Highlights</h1>
+                                <span>
+                                    <FontAwesomeIcon icon={faHeart} />
+                                    Located in the heart of Paris, this property has an excellent location score of 9.7
+                                </span>
+                                <h2>Breakfast Info</h2>
+                                <span>
+                                    Contintental, Vegetarian, Vegan, Gluten-free, American
+                                </span>
+                                <h3>${days * data.cheapestPrice * options.room} ({days} nights)</h3>
+                                <h4>${data.cheapestPrice}/night</h4>
+                                <button onClick={handleClick}>Reserve Now</button>
+                            </div>
                         </div>
                     </div>
+                    <MailList />
+                    <Footer />
                 </div>
-                <MailList />
-                <Footer />
-            </div>
+                </>
+                )}
+            {openBook && <Reserve setOpenModal={setOpenBook} hotelId={hotelId} />}
         </div>
     )
 }

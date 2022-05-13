@@ -1,10 +1,9 @@
-import { format } from "date-fns";
 import { useState } from "react"; 
-import { DateRange } from "react-date-range";
 import { useLocation } from "react-router-dom";
-import Header from "../../components/Header/Header"; 
-import Navbar from "../../components/Navbar/Navbar"; 
-import SearchItem from "../../components/SearchItem/SearchItem";
+import { DateRange } from "react-date-range";
+import { format } from "date-fns";
+import { Header, Navbar, SearchItem, Spinner } from "../../components/index"; 
+import useFetch from "../../hooks/useFetch";
 import "./List.scss"; 
 
 const List = () => {
@@ -14,9 +13,19 @@ const List = () => {
 
     // useState
     const [destination, setDestination] = useState(location.state.destination); 
-    const [date, setDate] = useState(location.state.date); 
+    const [dates, setDates] = useState(location.state.dates); 
     const [openDate, setOpenDate] = useState(false); 
     const [options, setOptions] = useState(location.state.options); 
+    const [min, setMin] = useState(undefined); 
+    const [max, setMax] = useState(undefined); 
+
+    // useFetch 
+    const { data, loading, error, reFetch } = useFetch(`/hotels?city=${destination}&min=${min || 0}&max=${max || Infinity}`); 
+
+    // handleClick
+    const handleClick = () => {
+        reFetch(); 
+    };
 
     return (
         <div>
@@ -36,11 +45,11 @@ const List = () => {
                         </div>
                         <div className="list-search-item">
                             <label htmlFor="checkInDate">Check-in Date</label>
-                            <span onClick={() => setOpenDate(!openDate)}>{ `${format(date[0].startDate, "MM/dd/yyyy")} to ${format(date[0].endDate, "MM/dd/yyyy")}` }</span>
+                            <span onClick={() => setOpenDate(!openDate)}>{ `${format(dates[0].startDate, "MM/dd/yyyy")} to ${format(dates[0].endDate, "MM/dd/yyyy")}` }</span>
                             {openDate && <DateRange 
-                                onChange={item => setDate([item.selection])}
+                                onChange={item => setDates([item.selection])}
                                 minDate={new Date()}
-                                ranges={date}
+                                ranges={dates}
                             />}
                         </div>
                         <div className="list-search-item">
@@ -51,6 +60,7 @@ const List = () => {
                                     <input
                                         type="number"
                                         className="list-search-option-input" 
+                                        onChange={e => setMin(e.target.value)}
                                     />
                                 </div>
                                 <div className="list-search-option-item">
@@ -58,6 +68,7 @@ const List = () => {
                                     <input
                                         type="number"
                                         className="list-search-option-input" 
+                                        onChange={e => setMax(e.target.value)}
                                     />
                                 </div>
                                 <div className="list-search-option-item">
@@ -89,17 +100,19 @@ const List = () => {
                                 </div>
                             </div>
                         </div>
-                        <button>Search</button>
+                        <button onClick={handleClick}>Search</button>
                     </div>
                     <div className="list-result">
-                        <SearchItem />
-                        <SearchItem />
-                        <SearchItem />
-                        <SearchItem />
-                        <SearchItem />
-                        <SearchItem />
-                        <SearchItem />
-                        <SearchItem />
+                        {loading ? (
+                            <Spinner />
+                        ) : (
+                                <>
+                                {data.map((item) => (
+                                    <SearchItem item={item} key={item._id} />
+                                ))}
+                                </>
+                            )
+                        }
                     </div>
                 </div>
             </div>
