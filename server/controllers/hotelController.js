@@ -10,6 +10,12 @@ const registerHotel = asyncHandler(async (req, res) => {
         res.status(400); 
         throw new Error("Please add all fields"); 
     }; 
+    // check if hotel exists by name
+    const hotelExists = await Hotel.findOne({name})
+    if(hotelExists) {
+        res.status(400);
+        throw new Error("Hotel already exists");
+    };
     // create hotel with req.body 
     const hotel = await Hotel.create({
         name, 
@@ -20,7 +26,7 @@ const registerHotel = asyncHandler(async (req, res) => {
         title,
         description,
         cheapestPrice, 
-        rating
+        rating, 
     }); 
     if(hotel) {
         res.status(201).json({
@@ -75,7 +81,7 @@ const getHotel = asyncHandler(async (req, res) => {
 const getAllHotels = asyncHandler(async (req, res) => {
     const { min, max, ...others } = req.query 
     // query with limit 
-    const hotels = await Hotel.find({...others, cheapestPrice: { $gt: min | 1, $lt: max || 2000 }}).limit(req.query.limit); 
+    const hotels = await Hotel.find({...others, cheapestPrice: { $gt: min | 1, $lt: max || Infinity }}).limit(req.query.limit); 
     if(!hotels) {
         res.status(400); 
         throw new Error("No Hotels found"); 
