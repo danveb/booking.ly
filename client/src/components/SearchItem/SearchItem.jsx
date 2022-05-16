@@ -1,31 +1,61 @@
+import { Link } from "react-router-dom"; 
 import "./SearchItem.scss"; 
 
-const SearchItem = () => {
+const SearchItem = ({ item }) => {
+    const ratings = (num) => {
+        if(num >= 1 && num <= 3) {
+            return "Avoid"
+        }
+        if(num > 3 && num <= 4.5) {
+            return "Poor"
+        }
+        if(num > 4.6 && num <= 6) {
+            return "Average"
+        } 
+        if(num > 6 && num <= 6.9) {
+            return "Good"
+        } 
+        if(num >= 7 && num < 8.5) {
+            return "Very Good"
+        } 
+        if(num > 8.5 && num < 9) {
+            return "Great"
+        } 
+        if(num >= 9 && num < 9.5) {
+            return "Excellent"
+        }
+        if(num >= 9.5) {
+            return "Exceptional"
+        }
+    }; 
+
     return (
         <div className="search-item">
             <img 
-                src="https://cf.bstatic.com/xdata/images/hotel/square600/135005484.webp?k=a45e8aeffcf45ae00de154d24e06e45693e893d8edd81e66a531eaa9088a07d7&o=&s=1"
-                alt=""
+                src={item.photos[0]}
+                alt="hotel-img"
                 className="search-item-img"
             />
             <div className="search-item-description">
-                <h1 className="search-item-title">Hôtel du Louvre, in The Unbound Collection by Hyatt</h1>
-                <span className="search-item-distance">0.8 miles from center</span>
+                <h1 className="search-item-title">{item.name}</h1>
+                <span className="search-item-distance">{item.distance} miles from center</span>
                 <span className="search-item-taxiOp">Free airport taxi</span>
-                <span className="search-item-subtitle">Studio Room with Air Conditioning</span>
-                <span className="search-item-features">Entire studio | 1 bathroom | 105 sq.ft | 1 king bed</span>
+                <span className="search-item-subtitle">{item.title}</span>
+                <span className="search-item-features">{item.description}</span>
                 <span className="search-item-cancelOp">Free cancellation</span>
                 <span className="search-item-cancelOp-subtitle">Book now!</span>
             </div>
             <div className="search-item-details">
-                <div className="search-item-rating">
-                    <span>Excellent</span>
-                    <button>8.8</button>
-                </div>
+                {item.rating && <div className="search-item-rating">
+                    <span>{ratings(item.rating)}</span>
+                    <button>{item.rating}</button>
+                </div>}
                 <div className="search-item-detail-texts">
-                    <span className="search-item-price">$750</span>
+                    <span className="search-item-price">${item.cheapestPrice}</span>
                     <span className="search-item-taxOp">Include taxes and fees</span>
-                    <button className="search-item-checkButton">See Availability</button>
+                    <Link to={`/hotels/${item._id}`}>
+                        <button className="search-item-checkButton">See Availability</button>
+                    </Link>
                 </div>
             </div>
         </div>
